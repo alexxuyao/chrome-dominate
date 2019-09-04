@@ -6,13 +6,16 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	c, err := NewChromeDominate("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+
+	c, err := NewChromeDominate(DominateConfig{
+		ChromePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+	})
 
 	if err != nil {
 		log.Println(err, "new chrome dominate error")
 	}
 
-	target, err := c.GetDefaultTarget()
+	target, err := c.GetOneTarget()
 
 	if err != nil {
 		log.Println(err, "new chrome dominate error")

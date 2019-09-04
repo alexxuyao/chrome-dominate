@@ -72,19 +72,18 @@ func GenType(m TheModel) {
 
 func TestTypeGen(t *testing.T) {
 	txt := `{
-                "id": "CookieParam",
-                "type": "object",
-                "description": "Cookie parameter object",
+                "id": "SignedCertificateTimestamp",
+                "type" : "object",
+                "description": "Details of a signed certificate timestamp (SCT).",
                 "properties": [
-                    { "name": "name", "type": "string", "description": "Cookie name." },
-                    { "name": "value", "type": "string", "description": "Cookie value." },
-                    { "name": "url", "type": "string", "optional": true, "description": "The request-URI to associate with the setting of the cookie. This value can affect the default domain and path values of the created cookie." },
-                    { "name": "domain", "type": "string", "optional": true, "description": "Cookie domain." },
-                    { "name": "path", "type": "string", "optional": true, "description": "Cookie path." },
-                    { "name": "secure", "type": "boolean", "optional": true, "description": "True if cookie is secure." },
-                    { "name": "httpOnly", "type": "boolean", "optional": true, "description": "True if cookie is http-only." },
-                    { "name": "sameSite", "$ref": "CookieSameSite", "optional": true, "description": "Cookie SameSite type." },
-                    { "name": "expires", "$ref": "TimeSinceEpoch", "optional": true, "description": "Cookie expiration date, session cookie if not set" }
+                    { "name": "status", "type": "string", "description": "Validation status." },
+                    { "name": "origin", "type": "string", "description": "Origin." },
+                    { "name": "logDescription", "type": "string", "description": "Log name / description." },
+                    { "name": "logId", "type": "string", "description": "Log ID." },
+                    { "name": "timestamp", "$ref": "TimeSinceEpoch", "description": "Issuance date." },
+                    { "name": "hashAlgorithm", "type": "string", "description": "Hash algorithm." },
+                    { "name": "signatureAlgorithm", "type": "string", "description": "Signature algorithm." },
+                    { "name": "signatureData", "type": "string", "description": "Signature data." }
                 ]
             }`
 

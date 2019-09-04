@@ -104,3 +104,35 @@ func (c *ChromeTargetDominate) SetCookies(cookies []CookieParam) error {
 
 	return nil
 }
+
+func (c *ChromeTargetDominate) EnableNetwork(param NetworkEnableParam) error {
+	cmd := CmdRootType{
+		Method: "Network.enable",
+		Params: param,
+	}
+
+	ret := make(map[string]interface{})
+	_, err := c.SendCmdWithResult(cmd, &ret)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ChromeTargetDominate) EnablePage() error {
+	cmd := CmdRootType{
+		Method: "Page.enable",
+		Params: map[string]string{},
+	}
+
+	ret := make(map[string]interface{})
+	_, err := c.SendCmdWithResult(cmd, &ret)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
+	"strings"
 	"sync"
 	"time"
 )
 
 type ChromeEventListener interface {
-	OnMessage(msgType string, message []byte)
+	OnMessage(method string, message []byte)
 }
 
 type ChromeTargetDominate struct {
+	TargetInfo  ChromeTargetType
 	listeners   []ChromeEventListener
 	conn        *websocket.Conn
 	resultCache *ResultCache
@@ -23,16 +25,17 @@ type ChromeTargetDominate struct {
 	rootDom     *ChromeDOM
 }
 
-func NewChromeTarget(wsUrl string) (*ChromeTargetDominate, error) {
+func NewChromeTarget(info ChromeTargetType) (*ChromeTargetDominate, error) {
 
 	target := &ChromeTargetDominate{
+		TargetInfo:  info,
 		listeners:   make([]ChromeEventListener, 0),
 		resultCache: NewResultCache(1*time.Minute, 10*time.Second),
 		tmpId:       0,
 		mutex:       new(sync.RWMutex),
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(wsUrl, nil)
+	conn, _, err := websocket.DefaultDialer.Dial(info.WebSocketDebuggerUrl, nil)
 
 	if err != nil {
 		return nil, err
@@ -62,8 +65,12 @@ func NewChromeTarget(wsUrl string) (*ChromeTargetDominate, error) {
 			if _, exist := ret["id"]; exist {
 				target.resultCache.Put(int64(ret["id"].(float64)), message)
 			} else {
-				msgType := ""
-				target.fireMessage(msgType, message)
+				s := string(message)
+				s = s[:strings.Index(s, ",")]
+				s = s[strings.Index(s, ":")+1:]
+				method := s[1 : len(s)-1]
+
+				target.fireMessage(method, message)
 			}
 
 		}
@@ -81,12 +88,12 @@ func (c *ChromeTargetDominate) Close() error {
 	return nil
 }
 
-func (c *ChromeTargetDominate) fireMessage(msgType string, message []byte) {
+func (c *ChromeTargetDominate) fireMessage(method string, message []byte) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
 	for _, listener := range c.listeners {
-		listener.OnMessage(msgType, message)
+		listener.OnMessage(method, message)
 	}
 }
 

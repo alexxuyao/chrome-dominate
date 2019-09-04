@@ -13,18 +13,30 @@ import (
 )
 
 type ChromeDominate struct {
-	process *os.Process
-	targets []*ChromeTargetDominate
+	config     DominateConfig
+	process    *os.Process
+	mainTarget *ChromeTargetDominate
+	targets    map[string]*ChromeTargetDominate
 }
 
-func NewChromeDominate(chromePath string) (*ChromeDominate, error) {
+type AfterNewChromeDominateTarget interface {
+	AfterNewChromeDominateTargetCreate(c *ChromeTargetDominate)
+}
+
+type DominateConfig struct {
+	ChromePath                   string
+	AfterNewChromeDominateTarget []AfterNewChromeDominateTarget
+}
+
+func NewChromeDominate(config DominateConfig) (*ChromeDominate, error) {
 
 	dominate := &ChromeDominate{
-		targets: make([]*ChromeTargetDominate, 0),
+		config:  config,
+		targets: make(map[string]*ChromeTargetDominate),
 	}
 
 	// 启动 chrome 进程
-	cmd := exec.Command(chromePath, "--remote-debugging-port=9222")
+	cmd := exec.Command(config.ChromePath, "--remote-debugging-port=9222")
 	var cmdErr error = nil
 	go func() {
 		_, err := cmd.Output()
@@ -72,25 +84,60 @@ func NewChromeDominate(chromePath string) (*ChromeDominate, error) {
 		break
 	}
 
-	// 拿target
+	return dominate, nil
+}
+
+func (c *ChromeDominate) GetOneTarget() (*ChromeTargetDominate, error) {
+
+	if len(c.targets) == 0 {
+
+		// 拿target
+		if err := c.InitPageTargets(); err != nil {
+			return nil, err
+		}
+
+	}
+
+	for _, v := range c.targets {
+		return v, nil
+	}
+
+	return nil, errors.New("not target found")
+}
+
+func (c *ChromeDominate) GetMainTarget() (*ChromeTargetDominate, error) {
+	if nil == c.mainTarget {
+		if err := c.initMainTarget(); err != nil {
+			return nil, err
+		}
+	}
+
+	if nil != c.mainTarget {
+		return c.mainTarget, nil
+	}
+
+	return nil, errors.New("can not init main target")
+}
+
+func (c *ChromeDominate) InitPageTargets() error {
 	url := "http://localhost:9222/json/list"
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Print(err, url)
-		return nil, err
+		return err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print(err, url)
-		return nil, err
+		return err
 	}
 
 	err = resp.Body.Close()
 
 	if err != nil {
 		log.Print(err, url)
-		return nil, err
+		return err
 	}
 
 	targets := make([]ChromeTargetType, 0)
@@ -98,29 +145,69 @@ func NewChromeDominate(chromePath string) (*ChromeDominate, error) {
 
 	if err != nil {
 		log.Print(err, url)
-		return nil, err
+		return err
 	}
 
 	for _, target := range targets {
-		if target.Type == "page" {
-			newItem, err := NewChromeTarget(target.WebSocketDebuggerUrl)
+		if _, find := c.targets[target.Id]; !find && target.Type == "page" {
+			newItem, err := NewChromeTarget(target)
 			if err != nil {
 				log.Print(err, target.WebSocketDebuggerUrl)
 				continue
 			}
 
-			dominate.targets = append(dominate.targets, newItem)
+			for _, v := range c.config.AfterNewChromeDominateTarget {
+				v.AfterNewChromeDominateTargetCreate(newItem)
+			}
+
+			c.targets[target.Id] = newItem
 		}
 	}
 
-	return dominate, nil
+	return nil
 }
 
-func (c *ChromeDominate) GetDefaultTarget() (*ChromeTargetDominate, error) {
+func (c *ChromeDominate) initMainTarget() error {
 
-	if len(c.targets) > 0 {
-		return c.targets[0], nil
+	url := "http://localhost:9222/json/version"
+	resp, err := http.Get(url)
+
+	if err != nil {
+		log.Print(err, url)
+		return err
 	}
 
-	return nil, errors.New("targets not found")
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Print(err, url)
+		return err
+	}
+
+	err = resp.Body.Close()
+
+	if err != nil {
+		log.Print(err, url)
+		return err
+	}
+
+	target := ChromeMainTargetType{}
+	err = json.Unmarshal(body, &target)
+
+	if err != nil {
+		log.Print(err, url)
+		return err
+	}
+
+	info := ChromeTargetType{
+		WebSocketDebuggerUrl: target.WebSocketDebuggerUrl,
+	}
+
+	newItem, err := NewChromeTarget(info)
+	if err != nil {
+		log.Print(err, target.WebSocketDebuggerUrl)
+		return err
+	}
+
+	c.mainTarget = newItem
+	return nil
 }
