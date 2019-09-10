@@ -3,7 +3,6 @@ package chromedominate
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"strings"
@@ -16,16 +15,19 @@ type ChromeEventListener interface {
 }
 
 type ChromeTargetDominate struct {
-	TargetInfo  ChromeTargetType
+	TargetInfo ChromeTargetType
+	IsAlive    bool // 是否活着，用于表示此target的websocket是否还活着
+
 	listeners   []ChromeEventListener
 	conn        *websocket.Conn
 	resultCache *ResultCache
 	tmpId       int64
 	mutex       *sync.RWMutex
 	rootDom     *ChromeDOM
+	parent      *ChromeDominate
 }
 
-func NewChromeTarget(info ChromeTargetType) (*ChromeTargetDominate, error) {
+func NewChromeTarget(info ChromeTargetType, parent *ChromeDominate) (*ChromeTargetDominate, error) {
 
 	target := &ChromeTargetDominate{
 		TargetInfo:  info,
@@ -33,32 +35,59 @@ func NewChromeTarget(info ChromeTargetType) (*ChromeTargetDominate, error) {
 		resultCache: NewResultCache(1*time.Minute, 10*time.Second),
 		tmpId:       0,
 		mutex:       new(sync.RWMutex),
+		parent:      parent,
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(info.WebSocketDebuggerUrl, nil)
-
-	if err != nil {
+	if err := target.InitWebSocket(); err != nil {
 		return nil, err
 	}
 
-	target.conn = conn
+	return target, nil
+}
 
+func (c *ChromeTargetDominate) SetAlive(alive bool) {
+	c.IsAlive = alive
+	if !alive {
+		c.parent.RemoveTargetById(c.TargetInfo.Id)
+	}
+}
+
+func (c *ChromeTargetDominate) InitWebSocket() error {
+	conn, _, err := websocket.DefaultDialer.Dial(c.TargetInfo.WebSocketDebuggerUrl, nil)
+
+	if err != nil {
+		return err
+	}
+
+	c.conn = conn
+	c.SetAlive(true)
+
+	conn.SetCloseHandler(func(code int, text string) error {
+
+		log.Println("websocket close.", code, text)
+
+		c.SetAlive(false)
+		return nil
+	})
+
+	// 处理接收消息
 	go func(target *ChromeTargetDominate) {
 		for {
 			_, message, err := target.conn.ReadMessage()
 			if err != nil {
-				fmt.Println("error:", err)
+				log.Println("websocket read message error:", err)
+				c.SetAlive(false)
 				return
 			}
 
 			msg := string(message)
-			fmt.Println("recv:", msg)
+			log.Println("websocket recv:", msg)
 
 			ret := make(map[string]interface{})
 			err = json.Unmarshal(message, &ret)
 
 			if err != nil {
-				fmt.Println("unmarshal error")
+				log.Println("unmarshal error", string(message))
 				continue
 			}
 
@@ -74,9 +103,9 @@ func NewChromeTarget(info ChromeTargetType) (*ChromeTargetDominate, error) {
 			}
 
 		}
-	}(target)
+	}(c)
 
-	return target, nil
+	return nil
 }
 
 func (c *ChromeTargetDominate) Close() error {

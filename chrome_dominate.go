@@ -87,6 +87,21 @@ func NewChromeDominate(config DominateConfig) (*ChromeDominate, error) {
 	return dominate, nil
 }
 
+func NewServerAgentChromeDominate(config DominateConfig) (*ChromeDominate, error) {
+
+	dominate := &ChromeDominate{
+		config:  config,
+		targets: make(map[string]*ChromeTargetDominate),
+	}
+
+	return dominate, nil
+}
+
+func (c *ChromeDominate) RemoveTargetById(id string) {
+	// TODO 是否需要锁
+	delete(c.targets, id)
+}
+
 func (c *ChromeDominate) GetOneTarget() (*ChromeTargetDominate, error) {
 
 	if len(c.targets) == 0 {
@@ -99,7 +114,9 @@ func (c *ChromeDominate) GetOneTarget() (*ChromeTargetDominate, error) {
 	}
 
 	for _, v := range c.targets {
-		return v, nil
+		if v.IsAlive {
+			return v, nil
+		}
 	}
 
 	return nil, errors.New("not target found")
@@ -150,7 +167,7 @@ func (c *ChromeDominate) InitPageTargets() error {
 
 	for _, target := range targets {
 		if _, find := c.targets[target.Id]; !find && target.Type == "page" {
-			newItem, err := NewChromeTarget(target)
+			newItem, err := NewChromeTarget(target, c)
 			if err != nil {
 				log.Print(err, target.WebSocketDebuggerUrl)
 				continue
@@ -202,7 +219,7 @@ func (c *ChromeDominate) initMainTarget() error {
 		WebSocketDebuggerUrl: target.WebSocketDebuggerUrl,
 	}
 
-	newItem, err := NewChromeTarget(info)
+	newItem, err := NewChromeTarget(info, c)
 	if err != nil {
 		log.Print(err, target.WebSocketDebuggerUrl)
 		return err
