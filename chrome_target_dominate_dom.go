@@ -63,6 +63,22 @@ func (c *ChromeTargetDominate) GetContentQuads(param GetContentQuadsParam) (*Get
 	return ret, nil
 }
 
+func (c *ChromeTargetDominate) GetBoxModel(param GetBoxModelParam) (*BoxModel, error) {
+	cmd := CmdRootType{
+		Method: "DOM.getBoxModel",
+		Params: param,
+	}
+
+	ret := &GetBoxModelResult{}
+	_, err := c.SendCmdWithResult(cmd, ret)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &ret.Model, nil
+}
+
 func (c *ChromeTargetDominate) QueryDom(selector string) (*ChromeDOM, error) {
 	ret, err := c.QuerySelectorFromRoot(selector)
 	if err != nil {

@@ -352,8 +352,16 @@ type GetContentQuadsParam struct {
 	ObjectId      *string `json:"objectId,omitempty"`
 }
 
+type GetBoxModelParam struct {
+	NodeId        *int64  `json:"nodeId,omitempty"`
+	BackendNodeId *int64  `json:"backendNodeId,omitempty"`
+	ObjectId      *string `json:"objectId,omitempty"`
+}
+
+type Quad []float64
+
 type GetContentQuadsResult struct {
-	Quads [][]float64 `json:"quads"`
+	Quads []Quad `json:"quads"`
 }
 
 type DispatchMouseEventParam struct {
@@ -368,4 +376,24 @@ type DispatchMouseEventParam struct {
 	DeltaX      *float64 `json:"deltaX,omitempty"`
 	DeltaY      *float64 `json:"deltaY,omitempty"`
 	PointerType *string  `json:"pointerType,omitempty"`
+}
+
+type GetBoxModelResult struct {
+	Model BoxModel `json:"model"`
+}
+
+type BoxModel struct {
+	Content      Quad              `json:"content"`
+	Padding      Quad              `json:"padding"`
+	Border       Quad              `json:"border"`
+	Margin       Quad              `json:"margin"`
+	Width        int64             `json:"width"`
+	Height       int64             `json:"height"`
+	ShapeOutside *ShapeOutsideInfo `json:"shapeOutside,omitempty"`
+}
+
+type ShapeOutsideInfo struct {
+	Bounds      Quad          `json:"bounds"`
+	Shape       []interface{} `json:"shape"`
+	MarginShape []interface{} `json:"marginShape"`
 }

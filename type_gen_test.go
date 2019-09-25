@@ -72,90 +72,30 @@ func GenType(m TheModel) {
 
 func TestTypeGen(t *testing.T) {
 	txt := `{
-                    "id": "DispatchMouseEventParam",
-                    "description": "Scope description.",
+                    "id": "ShapeOutsideInfo",
+                    "description": "CSS Shape Outside details.",
                     "type": "object",
                     "properties": [
-                          {
-                            "name": "type",
-                            "description": "Type of the mouse event.",
-                            "type": "string",
-                            "enum": [
-                                "mousePressed",
-                                "mouseReleased",
-                                "mouseMoved",
-                                "mouseWheel"
-                            ]
+                        {
+                            "name": "bounds",
+                            "description": "Shape bounds",
+                            "$ref": "Quad"
                         },
                         {
-                            "name": "x",
-                            "description": "X coordinate of the event relative to the main frame's viewport in CSS pixels.",
-                            "type": "number"
+                            "name": "shape",
+                            "description": "Shape coordinate details",
+                            "type": "array",
+                            "items": {
+                                "type": "any"
+                            }
                         },
                         {
-                            "name": "y",
-                            "description": "Y coordinate of the event relative to the main frame's viewport in CSS pixels. 0 refers to\nthe top of the viewport and Y increases as it proceeds towards the bottom of the viewport.",
-                            "type": "number"
-                        },
-                        {
-                            "name": "modifiers",
-                            "description": "Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8\n(default: 0).",
-                            "optional": true,
-                            "type": "integer"
-                        },
-                        {
-                            "name": "timestamp",
-                            "description": "Time at which the event occurred.",
-                            "optional": true,
-                            "$ref": "TimeSinceEpoch"
-                        },
-                        {
-                            "name": "button",
-                            "description": "Mouse button (default: \"none\").",
-                            "optional": true,
-                            "type": "string",
-                            "enum": [
-                                "none",
-                                "left",
-                                "middle",
-                                "right",
-                                "back",
-                                "forward"
-                            ]
-                        },
-                        {
-                            "name": "buttons",
-                            "description": "A number indicating which buttons are pressed on the mouse when a mouse event is triggered.\nLeft=1, Right=2, Middle=4, Back=8, Forward=16, None=0.",
-                            "optional": true,
-                            "type": "integer"
-                        },
-                        {
-                            "name": "clickCount",
-                            "description": "Number of times the mouse button was clicked (default: 0).",
-                            "optional": true,
-                            "type": "integer"
-                        },
-                        {
-                            "name": "deltaX",
-                            "description": "X delta in CSS pixels for mouse wheel event (default: 0).",
-                            "optional": true,
-                            "type": "number"
-                        },
-                        {
-                            "name": "deltaY",
-                            "description": "Y delta in CSS pixels for mouse wheel event (default: 0).",
-                            "optional": true,
-                            "type": "number"
-                        },
-                        {
-                            "name": "pointerType",
-                            "description": "Pointer type (default: \"mouse\").",
-                            "optional": true,
-                            "type": "string",
-                            "enum": [
-                                "mouse",
-                                "pen"
-                            ]
+                            "name": "marginShape",
+                            "description": "Margin shape bounds",
+                            "type": "array",
+                            "items": {
+                                "type": "any"
+                            }
                         }
                     ]
                 }`

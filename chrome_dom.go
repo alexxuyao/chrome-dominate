@@ -15,10 +15,10 @@ func NewChromeDom(nodeId int64, target *ChromeTargetDominate) *ChromeDOM {
 }
 
 func (d *ChromeDOM) Click() error {
-	param := GetContentQuadsParam{
+	param := GetBoxModelParam{
 		NodeId: &d.nodeId,
 	}
-	r, err := d.target.GetContentQuads(param)
+	r, err := d.target.GetBoxModel(param)
 
 	if err != nil {
 		return err
@@ -27,14 +27,14 @@ func (d *ChromeDOM) Click() error {
 	button := "left"
 	buttons := int64(1)
 	clickCount := int64(1)
-	deltaX := r.Quads[0][0] + 10
-	deltaY := r.Quads[0][1] + 10
+	deltaX := r.Content[0] + 10
+	deltaY := r.Content[1] + 10
 	pointerType := "mouse"
 
 	inputParam := DispatchMouseEventParam{
 		Type:        "mousePressed",
-		X:           r.Quads[0][0] + 10,
-		Y:           r.Quads[0][1] + 10,
+		X:           deltaX,
+		Y:           deltaY,
 		Button:      &button,
 		Buttons:     &buttons,
 		ClickCount:  &clickCount,
