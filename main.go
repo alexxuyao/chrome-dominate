@@ -20,17 +20,9 @@ func sendCmd(c *websocket.Conn, cmdMap map[string]interface{}) {
 	}
 }
 
-type QuerySelectorResult struct {
-	NodeId int `json:"nodeId"`
-}
-
 type QuerySelector struct {
 	Id     int                 `json:"id"`
 	Result QuerySelectorResult `json:"result"`
-}
-
-type GetContentQuadsResult struct {
-	Quads [][]float64 `json:"quads"`
 }
 
 type GetContentQuads struct {

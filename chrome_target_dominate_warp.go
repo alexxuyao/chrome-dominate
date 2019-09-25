@@ -20,22 +20,6 @@ func (c *ChromeTargetDominate) OpenPage(link string) (*ResultPageNavigate, error
 	return ret, nil
 }
 
-func (c *ChromeTargetDominate) GetRootDOM() (*ResultDOMNode, error) {
-	cmd := CmdRootType{
-		Method: "DOM.getDocument",
-		Params: make(map[string]interface{}),
-	}
-
-	ret := &ResultDOMNode{}
-	_, err := c.SendCmdWithResult(cmd, ret)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return ret, nil
-}
-
 func (c *ChromeTargetDominate) GetAllCookies() ([]Cookie, error) {
 
 	cmd := CmdRootType{
