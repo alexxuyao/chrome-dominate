@@ -16,7 +16,7 @@ type ChromeDominate struct {
 	config     DominateConfig
 	process    *os.Process
 	mainTarget *ChromeTargetDominate
-	targets    map[string]*ChromeTargetDominate
+	targets    map[TargetID]*ChromeTargetDominate
 }
 
 type AfterNewChromeDominateTarget interface {
@@ -32,7 +32,7 @@ func NewChromeDominate(config DominateConfig) (*ChromeDominate, error) {
 
 	dominate := &ChromeDominate{
 		config:  config,
-		targets: make(map[string]*ChromeTargetDominate),
+		targets: make(map[TargetID]*ChromeTargetDominate),
 	}
 
 	// 启动 chrome 进程
@@ -91,13 +91,13 @@ func NewServerAgentChromeDominate(config DominateConfig) (*ChromeDominate, error
 
 	dominate := &ChromeDominate{
 		config:  config,
-		targets: make(map[string]*ChromeTargetDominate),
+		targets: make(map[TargetID]*ChromeTargetDominate),
 	}
 
 	return dominate, nil
 }
 
-func (c *ChromeDominate) RemoveTargetById(id string) {
+func (c *ChromeDominate) RemoveTargetById(id TargetID) {
 	// TODO 是否需要锁
 	delete(c.targets, id)
 }

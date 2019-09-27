@@ -1,11 +1,11 @@
 package chromedominate
 
 type ChromeDOM struct {
-	nodeId int64
+	nodeId NodeId
 	target *ChromeTargetDominate
 }
 
-func NewChromeDom(nodeId int64, target *ChromeTargetDominate) *ChromeDOM {
+func NewChromeDom(nodeId NodeId, target *ChromeTargetDominate) *ChromeDOM {
 	dom := &ChromeDOM{
 		nodeId: nodeId,
 		target: target,
@@ -15,9 +15,14 @@ func NewChromeDom(nodeId int64, target *ChromeTargetDominate) *ChromeDOM {
 }
 
 func (d *ChromeDOM) Click() error {
+	return d.ClickTimes(1)
+}
+
+func (d *ChromeDOM) ClickTimes(times int) error {
 	param := GetBoxModelParam{
 		NodeId: &d.nodeId,
 	}
+
 	r, err := d.target.GetBoxModel(param)
 
 	if err != nil {
@@ -26,13 +31,12 @@ func (d *ChromeDOM) Click() error {
 
 	button := "left"
 	buttons := int64(1)
-	clickCount := int64(1)
+	clickCount := int64(times)
 	deltaX := r.Content[0] + 10
 	deltaY := r.Content[1] + 10
 	pointerType := "mouse"
 
 	inputParam := DispatchMouseEventParam{
-		Type:        "mousePressed",
 		X:           deltaX,
 		Y:           deltaY,
 		Button:      &button,
@@ -43,7 +47,33 @@ func (d *ChromeDOM) Click() error {
 		PointerType: &pointerType,
 	}
 
-	return d.target.DispatchMouseEvent(inputParam)
+	for i := 0; i < int(clickCount); i++ {
+
+		inputParam.Type = "mousePressed"
+		err = d.target.DispatchMouseEvent(inputParam)
+		if err != nil {
+			return err
+		}
+
+		inputParam.Type = "mouseReleased"
+		err = d.target.DispatchMouseEvent(inputParam)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *ChromeDOM) SetAttributeValue(name, value string) error {
+	return d.target.SetAttributeValue(d.nodeId, name, value)
+}
+
+func (d *ChromeDOM) GetOuterHTML() (string, error) {
+	param := GetOuterHTMLParam{
+		NodeId: &d.nodeId,
+	}
+	return d.target.GetOuterHTML(param)
 }
 
 func (d *ChromeDOM) Focus() {

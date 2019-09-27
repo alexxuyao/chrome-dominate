@@ -26,7 +26,7 @@ func TestChromeTargetDominate_GetAllCookies(t *testing.T) {
 		return
 	}
 
-	ret, err := target.OpenPage("https://www.alipay.com/")
+	ret, err := target.NavigateLink("https://www.alipay.com/")
 
 	if err != nil {
 		log.Println(err, "open baidu error")
@@ -71,7 +71,7 @@ func TestChromeTargetDominate_GetCookies(t *testing.T) {
 		return
 	}
 
-	ret, err := target.OpenPage("https://www.alipay.com/")
+	ret, err := target.NavigateLink("https://www.alipay.com/")
 
 	if err != nil {
 		log.Println(err, "open baidu error")
@@ -122,7 +122,7 @@ func TestChromeTargetDominate_SetCookie(t *testing.T) {
 		return
 	}
 
-	ret, err := target.OpenPage("https://www.alipay.com/")
+	ret, err := target.NavigateLink("https://www.alipay.com/")
 
 	if err != nil {
 		log.Println(err, "open baidu error")
@@ -191,7 +191,7 @@ func TestChromeTargetDominate_ListenTarget(t *testing.T) {
 		return
 	}
 
-	ret, err := target.OpenPage("https://www.alipay.com/")
+	ret, err := target.NavigateLink("https://www.alipay.com/")
 
 	if err != nil {
 		log.Println(err, "open baidu error")
@@ -242,7 +242,7 @@ func TestChromeTargetDominate_EnablePage(t *testing.T) {
 		return
 	}
 
-	ret, err := target.OpenPage("https://www.alipay.com/")
+	ret, err := target.NavigateLink("https://www.alipay.com/")
 
 	if err != nil {
 		log.Println(err, "open baidu error")

@@ -72,30 +72,60 @@ func GenType(m TheModel) {
 
 func TestTypeGen(t *testing.T) {
 	txt := `{
-                    "id": "ShapeOutsideInfo",
-                    "description": "CSS Shape Outside details.",
+                    "id": "Frame",
+                    "description": "Information about the Frame on the page.",
                     "type": "object",
                     "properties": [
                         {
-                            "name": "bounds",
-                            "description": "Shape bounds",
-                            "$ref": "Quad"
+                            "name": "id",
+                            "description": "Frame unique identifier.",
+                            "$ref": "FrameId"
                         },
                         {
-                            "name": "shape",
-                            "description": "Shape coordinate details",
-                            "type": "array",
-                            "items": {
-                                "type": "any"
-                            }
+                            "name": "parentId",
+                            "description": "Parent frame identifier.",
+                            "optional": true,
+                            "type": "string"
                         },
                         {
-                            "name": "marginShape",
-                            "description": "Margin shape bounds",
-                            "type": "array",
-                            "items": {
-                                "type": "any"
-                            }
+                            "name": "loaderId",
+                            "description": "Identifier of the loader associated with this frame.",
+                            "$ref": "Network.LoaderId"
+                        },
+                        {
+                            "name": "name",
+                            "description": "Frame's name as specified in the tag.",
+                            "optional": true,
+                            "type": "string"
+                        },
+                        {
+                            "name": "url",
+                            "description": "Frame document's URL without fragment.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "urlFragment",
+                            "description": "Frame document's URL fragment including the '#'.",
+                            "experimental": true,
+                            "optional": true,
+                            "type": "string"
+                        },
+                        {
+                            "name": "securityOrigin",
+                            "description": "Frame document's security origin.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "mimeType",
+                            "description": "Frame document's mimeType as determined by the browser.",
+                            "type": "string"
+                        },
+                        {
+                            "name": "unreachableUrl",
+                            "description": "If the frame failed to load, this contains the URL that could not be loaded. Note that unlike url above, this URL may contain a fragment.",
+                            "experimental": true,
+                            "optional": true,
+                            "type": "string"
                         }
                     ]
                 }`

@@ -183,6 +183,10 @@ func (c *ChromeTargetDominate) SendCmdWithResult(cmd CmdRootType, result interfa
 		return id, err
 	}
 
+	if ret.Error.Code != 0 {
+		return id, errors.New(ret.Error.Message)
+	}
+
 	return id, nil
 }
 
@@ -203,6 +207,7 @@ func (c *ChromeTargetDominate) RemoveListener(listener ChromeEventListener) {
 		if item == listener {
 			c.listeners = append(c.listeners[:i], c.listeners[i+1:]...)
 			i--
+			length--
 		}
 	}
 }

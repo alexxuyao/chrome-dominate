@@ -1,13 +1,25 @@
 package chromedominate
 
+type NodeId int64
+type TimeSinceEpoch float64
+type RequestId string
+type LoaderId string
+type MonotonicTime float64
+type ResourceType string // "Document","Stylesheet", "Image", "Media", "Font", "Script", "TextTrack", "XHR", "Fetch", "EventSource", "WebSocket", "Manifest", "SignedExchange", "Ping", "CSPViolationReport", "Other"
+type FrameId string
+type TargetID string
+type BrowserContextID string
+type BackendNodeId int64
+type RemoteObjectId string
+
 type ChromeTargetType struct {
-	Description          string `json:"description"`
-	DevtoolsFrontendUrl  string `json:"devtoolsFrontendUrl"`
-	Id                   string `json:"id"`
-	Title                string `json:"title"`
-	Type                 string `json:"type"`
-	Url                  string `json:"url"`
-	WebSocketDebuggerUrl string `json:"webSocketDebuggerUrl"`
+	Description          string   `json:"description"`
+	DevtoolsFrontendUrl  string   `json:"devtoolsFrontendUrl"`
+	Id                   TargetID `json:"id"`
+	Title                string   `json:"title"`
+	Type                 string   `json:"type"`
+	Url                  string   `json:"url"`
+	WebSocketDebuggerUrl string   `json:"webSocketDebuggerUrl"`
 }
 
 type ChromeMainTargetType struct {
@@ -25,21 +37,27 @@ type CmdRootType struct {
 	Params interface{} `json:"params"`
 }
 
+type ResultError struct {
+	Code    int64  `json:"code"`
+	Message string `json:"message"`
+}
+
 type ResultRootType struct {
 	Id     int64       `json:"id"`
 	Result interface{} `json:"result,omitempty"`
+	Error  ResultError `json:"error,omitempty"`
 }
 
 // Page.navigate
-type CmdPageNavigate struct {
-	Url            string  `json:"url"`
-	Referrer       *string `json:"referrer,omitempty"`
-	TransitionType *string `json:"transitionType,omitempty"`
-	FrameId        *string `json:"frameId,omitempty"`
+type NavigateParam struct {
+	Url            string   `json:"url"`
+	Referrer       *string  `json:"referrer,omitempty"`
+	TransitionType *string  `json:"transitionType,omitempty"`
+	FrameId        *FrameId `json:"frameId,omitempty"`
 }
 
 type ResultPageNavigate struct {
-	FrameId   string  `json:"frameId"`
+	FrameId   FrameId `json:"frameId"`
 	LoaderId  *string `json:"loaderId,omitempty"`
 	ErrorText *string `json:"errorText,omitempty"`
 }
@@ -55,7 +73,7 @@ type GetRootResult struct {
 }
 
 type ResultDOMNode struct {
-	NodeId           int64            `json:"nodeId,omitempty"`
+	NodeId           NodeId           `json:"nodeId,omitempty"`
 	ParentId         *int64           `json:"parentId,omitempty"`
 	BackendNodeId    int64            `json:"backendNodeId,omitempty"`
 	NodeType         int64            `json:"nodeType,omitempty"`
@@ -338,24 +356,34 @@ type EvaluateResult struct {
 }
 
 type QuerySelectorParam struct {
-	NodeId   int64  `json:"nodeId"`
+	NodeId   NodeId `json:"nodeId"`
 	Selector string `json:"selector"`
 }
 
 type QuerySelectorResult struct {
-	NodeId int64 `json:"nodeId"`
+	NodeId NodeId `json:"nodeId"`
 }
 
 type GetContentQuadsParam struct {
-	NodeId        *int64  `json:"nodeId,omitempty"`
+	NodeId        *NodeId `json:"nodeId,omitempty"`
 	BackendNodeId *int64  `json:"backendNodeId,omitempty"`
 	ObjectId      *string `json:"objectId,omitempty"`
 }
 
 type GetBoxModelParam struct {
-	NodeId        *int64  `json:"nodeId,omitempty"`
+	NodeId        *NodeId `json:"nodeId,omitempty"`
 	BackendNodeId *int64  `json:"backendNodeId,omitempty"`
 	ObjectId      *string `json:"objectId,omitempty"`
+}
+
+type GetOuterHTMLParam struct {
+	NodeId        *NodeId         `json:"nodeId,omitempty"`
+	BackendNodeId *BackendNodeId  `json:"backendNodeId,omitempty"`
+	ObjectId      *RemoteObjectId `json:"objectId,omitempty"`
+}
+
+type GetOuterHTMLResult struct {
+	OuterHTML string `json:"outerHTML"`
 }
 
 type Quad []float64
@@ -396,4 +424,71 @@ type ShapeOutsideInfo struct {
 	Bounds      Quad          `json:"bounds"`
 	Shape       []interface{} `json:"shape"`
 	MarginShape []interface{} `json:"marginShape"`
+}
+
+type SetAttributeValueParam struct {
+	NodeId NodeId `json:"nodeId"`
+	Name   string `json:"name"`
+	Value  string `json:"value"`
+}
+
+type DispatchKeyEventParam struct {
+	Type                  string          `json:"type"`
+	Modifiers             *int64          `json:"modifiers,omitempty"`
+	Timestamp             *TimeSinceEpoch `json:"timestamp,omitempty"`
+	Text                  *string         `json:"text,omitempty"`
+	UnmodifiedText        *string         `json:"unmodifiedText,omitempty"`
+	KeyIdentifier         *string         `json:"keyIdentifier,omitempty"`
+	Code                  *string         `json:"code,omitempty"`
+	Key                   *string         `json:"key,omitempty"`
+	WindowsVirtualKeyCode *int64          `json:"windowsVirtualKeyCode,omitempty"`
+	NativeVirtualKeyCode  *int64          `json:"nativeVirtualKeyCode,omitempty"`
+	AutoRepeat            *bool           `json:"autoRepeat,omitempty"`
+	IsKeypad              *bool           `json:"isKeypad,omitempty"`
+	IsSystemKey           *bool           `json:"isSystemKey,omitempty"`
+	Location              *int64          `json:"location,omitempty"`
+}
+
+type ResponseReceivedParam struct {
+	RequestId RequestId     `json:"requestId"`
+	LoaderId  LoaderId      `json:"loaderId"`
+	Timestamp MonotonicTime `json:"timestamp"`
+	Type      ResourceType  `json:"type"`
+	Response  Response      `json:"response"`
+	FrameId   *FrameId      `json:"frameId,omitempty"`
+}
+
+type GetResponseBodyResult struct {
+	Body          string `json:"body"`
+	Base64Encoded bool   `json:"base64Encoded"`
+}
+
+type GetTargetInfoResult struct {
+	TargetInfo TargetInfo `json:"targetInfo"`
+}
+
+type TargetInfo struct {
+	TargetId         TargetID          `json:"targetId"`
+	Type             string            `json:"type"`
+	Title            string            `json:"title"`
+	Url              string            `json:"url"`
+	Attached         bool              `json:"attached"`
+	OpenerId         *TargetID         `json:"openerId,omitempty"`
+	BrowserContextId *BrowserContextID `json:"browserContextId,omitempty"`
+}
+
+type Frame struct {
+	Id             FrameId  `json:"id"`
+	ParentId       *string  `json:"parentId,omitempty"`
+	LoaderId       LoaderId `json:"loaderId"`
+	Name           *string  `json:"name,omitempty"`
+	Url            string   `json:"url"`
+	UrlFragment    *string  `json:"urlFragment,omitempty"`
+	SecurityOrigin string   `json:"securityOrigin"`
+	MimeType       string   `json:"mimeType"`
+	UnreachableUrl *string  `json:"unreachableUrl,omitempty"`
+}
+
+type FrameNavigatedParam struct {
+	Frame Frame `json:"frame"`
 }

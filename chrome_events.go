@@ -1,7 +1,8 @@
 package chromedominate
 
 const (
-	EventPageWindowOpen = "Page.windowOpen"
+	EventPageWindowOpen     = "Page.windowOpen"
+	EventPageFrameNavigated = "Page.frameNavigated"
 
 	EventNetworkResponseReceived = "Network.responseReceived"
 )

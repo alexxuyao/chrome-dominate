@@ -21,7 +21,7 @@ func TestNew(t *testing.T) {
 		log.Println(err, "new chrome dominate error")
 	}
 
-	ret, err := target.OpenPage("https://www.alipay.com/")
+	ret, err := target.NavigateLink("https://www.alipay.com/")
 
 	if err != nil {
 		log.Println(err, "open baidu error")
