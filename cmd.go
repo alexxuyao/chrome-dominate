@@ -434,7 +434,7 @@ type SetAttributeValueParam struct {
 
 type DispatchKeyEventParam struct {
 	Type                  string          `json:"type"`
-	Modifiers             *int64          `json:"modifiers,omitempty"`
+	Modifiers             *int64          `json:"modifiers,omitempty"` // Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
 	Timestamp             *TimeSinceEpoch `json:"timestamp,omitempty"`
 	Text                  *string         `json:"text,omitempty"`
 	UnmodifiedText        *string         `json:"unmodifiedText,omitempty"`
