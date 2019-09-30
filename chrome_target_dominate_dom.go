@@ -75,7 +75,7 @@ func (c *ChromeTargetDominate) QuerySelectorTimeout(selector string, t time.Dura
 		n := time.Now().Unix()
 
 		if n-st > int64(t.Seconds()) {
-			return nil, errors.New("query timeout:" + err.Error())
+			return nil, errors.New("query timeout")
 		}
 
 		time.Sleep(time.Millisecond * 50)
