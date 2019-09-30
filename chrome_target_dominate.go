@@ -144,7 +144,7 @@ func (c *ChromeTargetDominate) SendCmd(cmd CmdRootType) (int64, error) {
 		return -1, err
 	}
 
-	log.Println(string(msg))
+	// log.Println(string(msg))
 
 	if c.conn == nil {
 		return -1, errors.New("conn is nil")
@@ -171,7 +171,7 @@ func (c *ChromeTargetDominate) SendCmdWithResult(cmd CmdRootType, result interfa
 		return id, errors.New("result not found")
 	}
 
-	log.Println("get result:", string(item.Data))
+	// log.Println("get result:", string(item.Data))
 
 	ret := &ResultRootType{
 		Result: result,
