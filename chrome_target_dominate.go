@@ -80,8 +80,8 @@ func (c *ChromeTargetDominate) InitWebSocket() error {
 				return
 			}
 
-			msg := string(message)
-			log.Println("websocket recv:", msg)
+			// msg := string(message)
+			// log.Println("websocket recv:", msg)
 
 			ret := make(map[string]interface{})
 			err = json.Unmarshal(message, &ret)
