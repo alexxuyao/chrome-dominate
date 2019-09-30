@@ -32,8 +32,8 @@ func (d *ChromeDOM) ClickTimes(times int) error {
 	button := "left"
 	buttons := int64(1)
 	clickCount := int64(times)
-	deltaX := r.Content[0] + 10
-	deltaY := r.Content[1] + 10
+	deltaX := (r.Content[0] + r.Content[2]) / 2
+	deltaY := (r.Content[1] + r.Content[5]) / 2
 	pointerType := "mouse"
 
 	inputParam := DispatchMouseEventParam{
