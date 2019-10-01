@@ -48,7 +48,28 @@ func (c *ChromeTargetDominate) EnablePage() error {
 	return nil
 }
 
-// =============================================
+func (c *ChromeTargetDominate) AddScriptToEvaluateOnNewDocument(script string) (ScriptIdentifier, error) {
+
+	param := AddScriptToEvaluateOnNewDocumentParam{
+		Source: script,
+	}
+
+	cmd := CmdRootType{
+		Method: "Page.addScriptToEvaluateOnNewDocument",
+		Params: param,
+	}
+
+	ret := &AddScriptToEvaluateOnNewDocumentResult{}
+	_, err := c.SendCmdWithResult(cmd, ret)
+
+	if err != nil {
+		return "", err
+	}
+
+	return ret.Identifier, nil
+}
+
+// ============================================= 需要 EnablePage
 func (c *ChromeTargetDominate) Navigated(param NavigateParam, t time.Duration) (*Frame, error) {
 	l := NewPageEventListener()
 	c.AddListener(l)

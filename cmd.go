@@ -11,6 +11,7 @@ type TargetID string
 type BrowserContextID string
 type BackendNodeId int64
 type RemoteObjectId string
+type ScriptIdentifier string
 
 type ChromeTargetType struct {
 	Description          string   `json:"description"`
@@ -491,4 +492,13 @@ type Frame struct {
 
 type FrameNavigatedParam struct {
 	Frame Frame `json:"frame"`
+}
+
+type AddScriptToEvaluateOnNewDocumentParam struct {
+	Source    string  `json:"source"`
+	WorldName *string `json:"worldName,omitempty"`
+}
+
+type AddScriptToEvaluateOnNewDocumentResult struct {
+	Identifier ScriptIdentifier `json:"identifier"`
 }

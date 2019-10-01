@@ -1,5 +1,10 @@
 package chromedominate
 
+import (
+	"math/rand"
+	"time"
+)
+
 type ChromeDOM struct {
 	nodeId NodeId
 	target *ChromeTargetDominate
@@ -32,8 +37,12 @@ func (d *ChromeDOM) ClickTimes(times int) error {
 	button := "left"
 	buttons := int64(1)
 	clickCount := int64(times)
-	deltaX := (r.Content[0] + r.Content[2]) / 2
-	deltaY := (r.Content[1] + r.Content[5]) / 2
+
+	randomX := r.Content[2] - r.Content[0] - 2
+	randomY := r.Content[5] - r.Content[1] - 2
+
+	deltaX := r.Content[0] + float64(rand.Int()%int(randomX))
+	deltaY := r.Content[1] + float64(rand.Int()%int(randomY))
 	pointerType := "mouse"
 
 	inputParam := DispatchMouseEventParam{
@@ -55,11 +64,15 @@ func (d *ChromeDOM) ClickTimes(times int) error {
 			return err
 		}
 
+		time.Sleep(time.Duration(rand.Int()%30) * time.Millisecond)
+
 		inputParam.Type = "mouseReleased"
 		err = d.target.DispatchMouseEvent(inputParam)
 		if err != nil {
 			return err
 		}
+
+		time.Sleep(time.Duration(30+rand.Int()%30) * time.Millisecond)
 	}
 
 	return nil
