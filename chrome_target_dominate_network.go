@@ -86,11 +86,12 @@ func (c *ChromeTargetDominate) EnableNetwork(param NetworkEnableParam) error {
 }
 
 func (c *ChromeTargetDominate) GetResponseBody(requestId RequestId) (GetResponseBodyResult, error) {
+	p := GetResponseBodyParam{
+		RequestId: requestId,
+	}
 	cmd := CmdRootType{
 		Method: "Network.getResponseBody",
-		Params: map[string]string{
-			"requestId": string(requestId),
-		},
+		Params: p,
 	}
 
 	ret := GetResponseBodyResult{}

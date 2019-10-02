@@ -72,60 +72,74 @@ func GenType(m TheModel) {
 
 func TestTypeGen(t *testing.T) {
 	txt := `{
-                    "id": "Frame",
-                    "description": "Information about the Frame on the page.",
+                    "id": "Request",
+                    "description": "HTTP request data.",
                     "type": "object",
                     "properties": [
                         {
-                            "name": "id",
-                            "description": "Frame unique identifier.",
-                            "$ref": "FrameId"
-                        },
-                        {
-                            "name": "parentId",
-                            "description": "Parent frame identifier.",
-                            "optional": true,
-                            "type": "string"
-                        },
-                        {
-                            "name": "loaderId",
-                            "description": "Identifier of the loader associated with this frame.",
-                            "$ref": "Network.LoaderId"
-                        },
-                        {
-                            "name": "name",
-                            "description": "Frame's name as specified in the tag.",
-                            "optional": true,
-                            "type": "string"
-                        },
-                        {
                             "name": "url",
-                            "description": "Frame document's URL without fragment.",
+                            "description": "Request URL (without fragment).",
                             "type": "string"
                         },
                         {
                             "name": "urlFragment",
-                            "description": "Frame document's URL fragment including the '#'.",
-                            "experimental": true,
+                            "description": "Fragment of the requested URL starting with hash, if present.",
                             "optional": true,
                             "type": "string"
                         },
                         {
-                            "name": "securityOrigin",
-                            "description": "Frame document's security origin.",
+                            "name": "method",
+                            "description": "HTTP request method.",
                             "type": "string"
                         },
                         {
-                            "name": "mimeType",
-                            "description": "Frame document's mimeType as determined by the browser.",
-                            "type": "string"
+                            "name": "headers",
+                            "description": "HTTP request headers.",
+                            "$ref": "Headers"
                         },
                         {
-                            "name": "unreachableUrl",
-                            "description": "If the frame failed to load, this contains the URL that could not be loaded. Note that unlike url above, this URL may contain a fragment.",
-                            "experimental": true,
+                            "name": "postData",
+                            "description": "HTTP POST request data.",
                             "optional": true,
                             "type": "string"
+                        },
+                        {
+                            "name": "hasPostData",
+                            "description": "True when the request has POST data. Note that postData might still be omitted when this flag is true when the data is too long.",
+                            "optional": true,
+                            "type": "boolean"
+                        },
+                        {
+                            "name": "mixedContentType",
+                            "description": "The mixed content type of the request.",
+                            "optional": true,
+                            "$ref": "Security.MixedContentType"
+                        },
+                        {
+                            "name": "initialPriority",
+                            "description": "Priority of the resource request at the time request is sent.",
+                            "$ref": "ResourcePriority"
+                        },
+                        {
+                            "name": "referrerPolicy",
+                            "description": "The referrer policy of the request, as defined in https://www.w3.org/TR/referrer-policy/",
+                            "type": "string",
+                            "enum": [
+                                "unsafe-url",
+                                "no-referrer-when-downgrade",
+                                "no-referrer",
+                                "origin",
+                                "origin-when-cross-origin",
+                                "same-origin",
+                                "strict-origin",
+                                "strict-origin-when-cross-origin"
+                            ]
+                        },
+                        {
+                            "name": "isLinkPreload",
+                            "description": "Whether is loaded via link preload.",
+                            "optional": true,
+                            "type": "boolean"
                         }
                     ]
                 }`

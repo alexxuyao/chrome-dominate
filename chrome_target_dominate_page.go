@@ -104,7 +104,7 @@ func NewPageEventListener() *PageEventListener {
 	return &l
 }
 
-func (p *PageEventListener) OnMessage(method string, message []byte) {
+func (p *PageEventListener) OnMessage(target *ChromeTargetDominate, method string, message []byte) {
 	if EventPageFrameNavigated == method {
 
 		param := &FrameNavigatedParam{}

@@ -169,7 +169,7 @@ type TestListener struct {
 	Name string
 }
 
-func (c *TestListener) OnMessage(msgType string, message []byte) {
+func (c *TestListener) OnMessage(target *ChromeTargetDominate, msgType string, message []byte) {
 	fmt.Println("i am " + c.Name + ", i get message :" + string(message))
 }
 

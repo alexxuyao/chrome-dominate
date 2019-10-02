@@ -5,4 +5,6 @@ const (
 	EventPageFrameNavigated = "Page.frameNavigated"
 
 	EventNetworkResponseReceived = "Network.responseReceived"
+
+	EventFetchRequestPaused = "Fetch.requestPaused"
 )

@@ -11,18 +11,19 @@ import (
 )
 
 type ChromeEventListener interface {
-	OnMessage(method string, message []byte)
+	OnMessage(target *ChromeTargetDominate, method string, message []byte)
 }
 
 type ChromeTargetDominate struct {
-	TargetInfo ChromeTargetType
-	IsAlive    bool // 是否活着，用于表示此target的websocket是否还活着
-
+	TargetInfo  ChromeTargetType
+	IsAlive     bool // 是否活着，用于表示此target的websocket是否还活着
 	listeners   []ChromeEventListener
 	conn        *websocket.Conn
 	resultCache *ResultCache
-	tmpId       int64
+	cmdCache    *ResultCache
 	mutex       *sync.RWMutex
+	chanCmd     chan CmdRootType
+	chanTmpId   chan int64
 	rootDom     *ChromeDOM
 	parent      *ChromeDominate
 }
@@ -33,14 +34,25 @@ func NewChromeTarget(info ChromeTargetType, parent *ChromeDominate) (*ChromeTarg
 		TargetInfo:  info,
 		listeners:   make([]ChromeEventListener, 0),
 		resultCache: NewResultCache(1*time.Minute, 10*time.Second),
-		tmpId:       0,
+		cmdCache:    NewResultCache(1*time.Minute, 3*time.Second),
 		mutex:       new(sync.RWMutex),
 		parent:      parent,
+		chanCmd:     make(chan CmdRootType),
+		chanTmpId:   make(chan int64),
 	}
 
 	if err := target.InitWebSocket(); err != nil {
 		return nil, err
 	}
+
+	// id 生成器
+	go func(target *ChromeTargetDominate) {
+		tmpId := int64(0)
+		for {
+			tmpId++
+			target.chanTmpId <- tmpId
+		}
+	}(target)
 
 	return target, nil
 }
@@ -80,8 +92,8 @@ func (c *ChromeTargetDominate) InitWebSocket() error {
 				return
 			}
 
-			// msg := string(message)
-			// log.Println("websocket recv:", msg)
+			msg := string(message)
+			log.Println("websocket recv:", msg)
 
 			ret := make(map[string]interface{})
 			err = json.Unmarshal(message, &ret)
@@ -105,6 +117,39 @@ func (c *ChromeTargetDominate) InitWebSocket() error {
 		}
 	}(c)
 
+	// 处理写
+	go func(target *ChromeTargetDominate) {
+		for {
+
+			//
+			cmd := <-target.chanCmd
+
+			// 序列化消息
+			msg, err := json.Marshal(cmd)
+
+			if err != nil {
+				target.cmdCache.Put(cmd.Id, []byte(err.Error()))
+				continue
+			}
+
+			log.Println("sendCmd:", string(msg))
+
+			if c.conn == nil {
+				target.cmdCache.Put(cmd.Id, []byte("conn is nil"))
+				continue
+			}
+
+			err = c.conn.WriteMessage(websocket.TextMessage, msg)
+
+			if err != nil {
+				target.cmdCache.Put(cmd.Id, []byte(err.Error()))
+				continue
+			}
+
+			target.cmdCache.Put(cmd.Id, []byte(""))
+		}
+	}(c)
+
 	return nil
 }
 
@@ -122,51 +167,39 @@ func (c *ChromeTargetDominate) fireMessage(method string, message []byte) {
 	defer c.mutex.RUnlock()
 
 	for _, listener := range c.listeners {
-		listener.OnMessage(method, message)
+		go listener.OnMessage(c, method, message)
 	}
-}
-
-func (c *ChromeTargetDominate) newReqId() int64 {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	c.tmpId++
-	return c.tmpId
 }
 
 func (c *ChromeTargetDominate) SendCmd(cmd CmdRootType) (int64, error) {
+	cmd.Id = <-c.chanTmpId
+	c.chanCmd <- cmd
 
-	cmd.Id = c.newReqId()
-
-	// 序列化消息
-	msg, err := json.Marshal(cmd)
-
-	if err != nil {
-		return -1, err
+	item, find := c.cmdCache.Pop(cmd.Id, 3*time.Second)
+	if !find {
+		return cmd.Id, errors.New("result not found")
 	}
 
-	// log.Println(string(msg))
-
-	if c.conn == nil {
-		return -1, errors.New("conn is nil")
-	}
-
-	err = c.conn.WriteMessage(websocket.TextMessage, msg)
-
-	if err != nil {
-		return -1, err
+	msg := string(item.Data)
+	if "" != msg {
+		return cmd.Id, errors.New(msg)
 	}
 
 	return cmd.Id, nil
 }
 
 func (c *ChromeTargetDominate) SendCmdWithResult(cmd CmdRootType, result interface{}) (int64, error) {
+	return c.SendCmdWithResultWait(cmd, result, 3*time.Second)
+}
+
+func (c *ChromeTargetDominate) SendCmdWithResultWait(cmd CmdRootType, result interface{}, timeWait time.Duration) (int64, error) {
 
 	id, err := c.SendCmd(cmd)
 	if err != nil {
 		return id, err
 	}
 
-	item, find := c.resultCache.Pop(id, time.Second*3)
+	item, find := c.resultCache.Pop(id, timeWait)
 	if !find {
 		return id, errors.New("result not found")
 	}

@@ -12,6 +12,11 @@ type BrowserContextID string
 type BackendNodeId int64
 type RemoteObjectId string
 type ScriptIdentifier string
+type InterceptionStage string // Request, HeadersReceived
+type RequestStage string      // Request, Response
+type ErrorReason string       // "Failed"",Aborted"",TimedOut"",AccessDenied"",ConnectionClosed"",ConnectionReset"",ConnectionRefused"",ConnectionAborted"",ConnectionFailed"",NameNotResolved"",InternetDisconnected"",AddressUnreachable"",BlockedByClient"",BlockedByResponse"
+type MixedContentType string  // "blockable","optionally-blockable","none"
+type ResourcePriority string  // "VeryLow","Low","Medium","High","VeryHigh"
 
 type ChromeTargetType struct {
 	Description          string   `json:"description"`
@@ -459,6 +464,10 @@ type ResponseReceivedParam struct {
 	FrameId   *FrameId      `json:"frameId,omitempty"`
 }
 
+type GetResponseBodyParam struct {
+	RequestId RequestId `json:"requestId"`
+}
+
 type GetResponseBodyResult struct {
 	Body          string `json:"body"`
 	Base64Encoded bool   `json:"base64Encoded"`
@@ -501,4 +510,77 @@ type AddScriptToEvaluateOnNewDocumentParam struct {
 
 type AddScriptToEvaluateOnNewDocumentResult struct {
 	Identifier ScriptIdentifier `json:"identifier"`
+}
+
+type CanEmulateResult struct {
+	Result bool `json:"result"`
+}
+
+type SetUserAgentOverrideParam struct {
+	UserAgent      string  `json:"userAgent"`
+	AcceptLanguage *string `json:"acceptLanguage,omitempty"`
+	Platform       *string `json:"platform,omitempty"`
+}
+
+type RequestPattern struct {
+	UrlPattern        *string            `json:"urlPattern,omitempty"`
+	ResourceType      *ResourceType      `json:"resourceType,omitempty"`
+	InterceptionStage *InterceptionStage `json:"interceptionStage,omitempty"` // 新版本
+	RequestStage      *RequestStage      `json:"requestStage,omitempty"`      // 老版本
+}
+
+type FetchEnableParam struct {
+	Patterns           []RequestPattern `json:"patterns,omitempty"`
+	HandleAuthRequests bool             `json:"handleAuthRequests,omitempty"`
+}
+
+type FailRequestParam struct {
+	RequestId   RequestId   `json:"requestId"`
+	ErrorReason ErrorReason `json:"errorReason"`
+}
+
+type FulfillRequestParam struct {
+	RequestId             RequestId     `json:"requestId"`
+	ResponseCode          int64         `json:"responseCode"`
+	ResponseHeaders       []HeaderEntry `json:"responseHeaders"`
+	BinaryResponseHeaders *string       `json:"binaryResponseHeaders,omitempty"`
+	Body                  *string       `json:"body,omitempty"`
+	ResponsePhrase        *string       `json:"responsePhrase,omitempty"`
+}
+
+type HeaderEntry struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type ContinueRequestParam struct {
+	RequestId RequestId     `json:"requestId"`
+	Url       *string       `json:"url,omitempty"`
+	Method    *string       `json:"method,omitempty"`
+	PostData  *string       `json:"postData,omitempty"`
+	Headers   []HeaderEntry `json:"headers,omitempty"`
+}
+
+type RequestPausedParam struct {
+	RequestId           RequestId     `json:"requestId"`
+	Request             Request       `json:"request"`
+	FrameId             FrameId       `json:"frameId"`
+	ResourceType        ResourceType  `json:"resourceType"`
+	ResponseErrorReason *ErrorReason  `json:"responseErrorReason,omitempty"`
+	ResponseStatusCode  *int64        `json:"responseStatusCode,omitempty"`
+	ResponseHeaders     []HeaderEntry `json:"responseHeaders,omitempty"`
+	NetworkId           *RequestId    `json:"networkId,omitempty"`
+}
+
+type Request struct {
+	Url              string            `json:"url"`
+	UrlFragment      *string           `json:"urlFragment,omitempty"`
+	Method           string            `json:"method"`
+	Headers          Headers           `json:"headers"`
+	PostData         *string           `json:"postData,omitempty"`
+	HasPostData      *bool             `json:"hasPostData,omitempty"`
+	MixedContentType *MixedContentType `json:"mixedContentType,omitempty"`
+	InitialPriority  ResourcePriority  `json:"initialPriority"`
+	ReferrerPolicy   string            `json:"referrerPolicy"`
+	IsLinkPreload    *bool             `json:"isLinkPreload,omitempty"`
 }
