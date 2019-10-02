@@ -65,7 +65,9 @@ func (c *ChromeTargetDominate) SetAlive(alive bool) {
 }
 
 func (c *ChromeTargetDominate) InitWebSocket() error {
-	conn, _, err := websocket.DefaultDialer.Dial(c.TargetInfo.WebSocketDebuggerUrl, nil)
+	dialer := websocket.DefaultDialer
+	dialer.WriteBufferSize = 1024 * 1024 * 20
+	conn, _, err := dialer.Dial(c.TargetInfo.WebSocketDebuggerUrl, nil)
 
 	if err != nil {
 		return err
