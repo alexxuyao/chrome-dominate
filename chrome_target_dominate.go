@@ -100,7 +100,7 @@ func (c *ChromeTargetDominate) InitWebSocket() error {
 
 			_, message, err := target.conn.ReadMessage()
 			if err != nil {
-				log.Println("websocket read message error:", err)
+				// log.Println("websocket read message error:", err)
 				continue
 			}
 
