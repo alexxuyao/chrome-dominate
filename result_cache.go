@@ -15,7 +15,7 @@ type ResultCache struct {
 	cMap       map[int64]*CacheItem
 	ticker     *time.Ticker
 	tickerStop chan bool
-	mutex      *sync.RWMutex
+	mutex      *sync.Mutex
 	keepTime   time.Duration
 }
 
@@ -28,7 +28,7 @@ func NewResultCache(tickerTime time.Duration, keepTime time.Duration) *ResultCac
 		cMap:       make(map[int64]*CacheItem),
 		ticker:     time.NewTicker(tickerTime),
 		tickerStop: make(chan bool),
-		mutex:      new(sync.RWMutex),
+		mutex:      new(sync.Mutex),
 		keepTime:   keepTime,
 	}
 
@@ -92,8 +92,8 @@ func (cache *ResultCache) Close() {
 }
 
 func (cache *ResultCache) pop(id int64) (*CacheItem, bool) {
-	cache.mutex.RLock()
-	defer cache.mutex.RUnlock()
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
 
 	r, ok := cache.cMap[id]
 	if ok {

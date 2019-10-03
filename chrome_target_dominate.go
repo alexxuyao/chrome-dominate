@@ -24,6 +24,7 @@ type ChromeTargetDominate struct {
 	mutex       *sync.RWMutex
 	chanCmd     chan CmdRootType
 	chanTmpId   chan int64
+	chanClose   chan int
 	rootDom     *ChromeDOM
 	parent      *ChromeDominate
 }
@@ -39,6 +40,7 @@ func NewChromeTarget(info ChromeTargetType, parent *ChromeDominate) (*ChromeTarg
 		parent:      parent,
 		chanCmd:     make(chan CmdRootType),
 		chanTmpId:   make(chan int64),
+		chanClose:   make(chan int),
 	}
 
 	if err := target.InitWebSocket(); err != nil {
@@ -76,26 +78,33 @@ func (c *ChromeTargetDominate) InitWebSocket() error {
 	c.conn = conn
 	c.SetAlive(true)
 
-	conn.SetCloseHandler(func(code int, text string) error {
-
-		log.Println("websocket close.", code, text)
-
-		c.SetAlive(false)
-		return nil
-	})
-
 	// 处理接收消息
 	go func(target *ChromeTargetDominate) {
+
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println(err)
+
+				if err = target.Close(); err != nil {
+					log.Println(err)
+				}
+			}
+		}()
+
 		for {
+
+			if !target.IsAlive {
+				log.Println("target not alive, break read message goroutine", target.TargetInfo.Id)
+				break
+			}
+
 			_, message, err := target.conn.ReadMessage()
 			if err != nil {
 				log.Println("websocket read message error:", err)
-				c.SetAlive(false)
-				return
+				continue
 			}
 
-			msg := string(message)
-			log.Println("websocket recv:", msg)
+			// log.Println("websocket recv:", string(message))
 
 			ret := make(map[string]interface{})
 			err = json.Unmarshal(message, &ret)
@@ -124,31 +133,37 @@ func (c *ChromeTargetDominate) InitWebSocket() error {
 		for {
 
 			//
-			cmd := <-target.chanCmd
+			select {
+			case cmd := <-target.chanCmd:
 
-			// 序列化消息
-			msg, err := json.Marshal(cmd)
+				// 序列化消息
+				msg, err := json.Marshal(cmd)
 
-			if err != nil {
-				target.cmdCache.Put(cmd.Id, []byte(err.Error()))
-				continue
+				if err != nil {
+					target.cmdCache.Put(cmd.Id, []byte(err.Error()))
+					continue
+				}
+
+				log.Println("sendCmd:", cmd.Id, cmd.Method)
+
+				if c.conn == nil {
+					target.cmdCache.Put(cmd.Id, []byte("conn is nil"))
+					continue
+				}
+
+				err = c.conn.WriteMessage(websocket.TextMessage, msg)
+
+				if err != nil {
+					target.cmdCache.Put(cmd.Id, []byte(err.Error()))
+					continue
+				}
+
+				target.cmdCache.Put(cmd.Id, []byte(""))
+			case <-target.chanClose:
+				log.Println("target not alive, break write message goroutine:", target.TargetInfo.Id)
+				break
 			}
 
-			log.Println("sendCmd:", string(msg))
-
-			if c.conn == nil {
-				target.cmdCache.Put(cmd.Id, []byte("conn is nil"))
-				continue
-			}
-
-			err = c.conn.WriteMessage(websocket.TextMessage, msg)
-
-			if err != nil {
-				target.cmdCache.Put(cmd.Id, []byte(err.Error()))
-				continue
-			}
-
-			target.cmdCache.Put(cmd.Id, []byte(""))
 		}
 	}(c)
 
@@ -156,6 +171,11 @@ func (c *ChromeTargetDominate) InitWebSocket() error {
 }
 
 func (c *ChromeTargetDominate) Close() error {
+
+	log.Println("target close:", c.TargetInfo.Id)
+
+	c.chanClose <- 1
+	c.SetAlive(false)
 
 	if nil != c.conn {
 		return c.conn.Close()
