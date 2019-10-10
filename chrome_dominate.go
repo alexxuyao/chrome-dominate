@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 )
 
@@ -25,10 +26,15 @@ type AfterNewChromeDominateTarget interface {
 
 type DominateConfig struct {
 	ChromePath                   string
+	RemoteDebuggingPort          int
 	AfterNewChromeDominateTarget []AfterNewChromeDominateTarget
 }
 
 func NewChromeDominate(config DominateConfig) (*ChromeDominate, error) {
+
+	if config.RemoteDebuggingPort == 0 {
+		config.RemoteDebuggingPort = 9222
+	}
 
 	dominate := &ChromeDominate{
 		config:  config,
@@ -36,7 +42,7 @@ func NewChromeDominate(config DominateConfig) (*ChromeDominate, error) {
 	}
 
 	// 启动 chrome 进程
-	cmd := exec.Command(config.ChromePath, "--remote-debugging-port=9222")
+	cmd := exec.Command(config.ChromePath, "--remote-debugging-port="+strconv.Itoa(config.RemoteDebuggingPort))
 	var cmdErr error = nil
 	go func() {
 		_, err := cmd.Output()
@@ -68,10 +74,10 @@ func NewChromeDominate(config DominateConfig) (*ChromeDominate, error) {
 
 		now := time.Now().Unix()
 		if now-startTime > 10 {
-			return nil, errors.New("can not dial tcp localhost:9222")
+			return nil, errors.New("can not dial tcp localhost:" + strconv.Itoa(config.RemoteDebuggingPort))
 		}
 
-		c, err := net.Dial("tcp", "localhost:9222")
+		c, err := net.Dial("tcp", "localhost:"+strconv.Itoa(config.RemoteDebuggingPort))
 		if err != nil {
 			time.Sleep(100 * time.Millisecond)
 			continue
@@ -137,21 +143,23 @@ func (c *ChromeDominate) GetMainTarget() (*ChromeTargetDominate, error) {
 }
 
 func (c *ChromeDominate) InitPageTargets() error {
-	url := "http://localhost:9222/json/list"
+	url := "http://localhost:" + strconv.Itoa(c.config.RemoteDebuggingPort) + "/json/list"
 	resp, err := http.Get(url)
+
 	if err != nil {
 		log.Print(err, url)
 		return err
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if 200 != resp.StatusCode {
+		return errors.New("httpStatusCode not 200:" + strconv.Itoa(resp.StatusCode))
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Print(err, url)
-		return err
-	}
-
-	err = resp.Body.Close()
-
 	if err != nil {
 		log.Print(err, url)
 		return err
@@ -186,7 +194,7 @@ func (c *ChromeDominate) InitPageTargets() error {
 
 func (c *ChromeDominate) initMainTarget() error {
 
-	url := "http://localhost:9222/json/version"
+	url := "http://localhost:" + strconv.Itoa(c.config.RemoteDebuggingPort) + "/json/version"
 	resp, err := http.Get(url)
 
 	if err != nil {
